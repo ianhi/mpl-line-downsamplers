@@ -1,18 +1,36 @@
-import numpy as np
-import matplotlib
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from numbers import Integral
+    from typing import Set
+    from matplotlib.axes import Axes
+    from matplotlib.backend_bases import RendererBase
+
 import matplotlib.lines
+import numpy as np
 from matplotlib.artist import allow_rasterization
 
+__all__ = [
+    "DataSource",
+    "SimpleSource",
+    "DFSource",
+    "FuncSource1D",
+    "ArraySource1D",
+    "DSLine2D",
+    "InvalidDataSource",
+]
 
-class MatplotlibException(Exception):
+
+class InvalidDataSource(ValueError):
     ...
 
 
-class InvalidDatasource(MatplotlibException, ValueError):
-    ...
+class DataSource:
+    def get(self, keys: Set[str], ax: Axes, renderer: RendererBase):
+        raise NotImplementedError
 
 
-class SimpleSource:
+class SimpleSource(DataSource):
     def __init__(self, **kwargs):
         self._data = {k: np.asanyarray(v) for k, v in kwargs.items()}
         self.md = {k: {"ndim": v.ndim, "dtype": v.dtype} for k, v in self._data.items()}
@@ -21,7 +39,8 @@ class SimpleSource:
         return {k: self._data[k] for k in keys}
 
 
-class DFSource:
+# TODO: add some typing here
+class DFSource(DataSource):
     def __init__(self, df, **kwargs):
         self._remapping = kwargs
         self._data = df
@@ -31,7 +50,7 @@ class DFSource:
         return {k: self._data[self._mapping[k]] for k in keys}
 
 
-class FuncSource1D:
+class FuncSource1D(DataSource):
     def __init__(self, func):
         self._func = func
         self.md = {"x": {"ndim": 1, "dtype": float}, "y": {"ndim": 1, "dtype": float}}
@@ -45,10 +64,41 @@ class FuncSource1D:
         return {"x": x, "y": self._func(x)}
 
 
+class ArraySource1D(DataSource):
+    def __init__(self, array, scale=1) -> None:
+        self._arr = array
+        self._scale = scale
+        # TODO: also account for xarray?
+        if hasattr(self._arr, "vindex"):
+            # accounting for zarr
+            self._indexer = self._arr.vindex
+        else:
+            self._indexer = self._arr
+        self.md = {"x": {"ndim": 1, "dtype": float}, "y": {"ndim": 1, "dtype": float}}
+
+    @property
+    def scale(self) -> int:
+        return self.scale
+
+    @scale.setter
+    def scale(self, value: int):
+        if not isinstance(value, Integral):
+            raise TypeError(f"scale must be integer values but is type {type(value)}")
+        self._scale = value
+
+    def get(self, keys: Set[str], ax: Axes, renderer):
+        xlim = ax.get_xlim()
+        xmin = np.max([int(xlim[0]), 0])
+        xmax = np.max([int(xlim[1]), 0])
+        x = np.arange(xmin, xmax, self._scale)
+
+        return {"x": x, "y": self._indexer[x]}
+
+
 class DSLine2D(matplotlib.lines.Line2D):
     def __init__(self, DS, **kwargs):
         if not all(k in DS.md for k in ("x", "y")):
-            raise InvalidDatasource
+            raise InvalidDataSource
         self._DS = DS
         super().__init__([], [], **kwargs)
 
