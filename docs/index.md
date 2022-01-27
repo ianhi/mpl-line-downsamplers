@@ -29,5 +29,5 @@ contributing
 :caption: Examples
 :maxdepth: 1
 
-examples/basic-example.ipynb
+examples/array-downsampling.ipynb
 ```
