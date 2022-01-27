@@ -1,0 +1,9 @@
+name: mpl-line-downsampler
+channels:
+  - defaults
+dependencies:
+  - pandoc
+  - pip
+  - python
+  - pip:
+      - -e .[dev]
