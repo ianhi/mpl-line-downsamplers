@@ -1,14 +1,12 @@
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from numbers import Integral
-    from typing import Set
-    from matplotlib.axes import Axes
-    from matplotlib.backend_bases import RendererBase
+# if TYPE_CHECKING:
+from numbers import Integral
+from typing import Set
 
 import matplotlib.lines
 import numpy as np
 from matplotlib.artist import allow_rasterization
+from matplotlib.axes import Axes
+from matplotlib.backend_bases import RendererBase
 
 __all__ = [
     "DataSource",
@@ -89,7 +87,7 @@ class ArraySource1D(DataSource):
     def get(self, keys: Set[str], ax: Axes, renderer):
         xlim = ax.get_xlim()
         xmin = np.max([int(xlim[0]), 0])
-        xmax = np.max([int(xlim[1]), 0])
+        xmax = np.min([np.max([int(xlim[1]), -1]), self._arr.shape[0]])
         x = np.arange(xmin, xmax, self._scale)
 
         return {"x": x, "y": self._indexer[x]}
