@@ -11,3 +11,6 @@ high performance downsampled line artists
 Entirely based on this gist: https://gist.github.com/tacaswell/95177903175dbc28be5353b4a0e5118f by @tacaswell
 
 with additions from @ianhi
+
+
+Try the example in `examples` and see how interactivity changes with different levels of downsampling.
