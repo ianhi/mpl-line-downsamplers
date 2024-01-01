@@ -102,7 +102,6 @@ class DSLine2D(matplotlib.lines.Line2D):
 
     @allow_rasterization
     def draw(self, renderer):
-
         data = self._DS.get({"x", "y"}, self.axes, renderer)
         super().set_data(data["x"], data["y"])
 
