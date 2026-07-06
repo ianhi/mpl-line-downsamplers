@@ -19,8 +19,7 @@ __all__ = [
 ]
 
 
-class InvalidDataSource(ValueError):
-    ...
+class InvalidDataSource(ValueError): ...
 
 
 class DataSource:
